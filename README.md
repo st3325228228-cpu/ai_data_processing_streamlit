@@ -1,103 +1,137 @@
 # 🤖 AI 資料處理中心
 
-這是一個基於 **Streamlit** 框架構建的 AI 資料處理工具，旨在提供一個便捷的介面，用於處理文件（PDF/DOCX）的文字提取、翻譯，以及 CSV/Excel 數據的清洗、統計分析和視覺化。
+一個以 Streamlit 打造的多功能資料處理工具，整合**文件處理**、**智能翻譯**、**數據清洗**與**數據分析視覺化**四大模組，讓文件與數據處理不再需要在多個工具間來回切換。
 
-## 功能特色
+---
 
-*   **文件處理**：
-    *   從 PDF 和 DOCX 文件中提取文字內容。
-    *   顯示文件元數據（如頁數、作者、創建日期等）。
-    *   提供提取文字的下載功能。
-*   **文本翻譯**：
-    *   支援多語言翻譯，自動檢測源語言。
-*   **數據清洗**：
-    *   載入 CSV 和 Excel 數據。
-    *   處理缺失值（均值、中位數、眾數填充或刪除）。
-    *   移除重複行。
-    *   轉換資料類型。
-    *   檢測數值欄位的異常值（基於 IQR 方法）。
-*   **數據分析與視覺化**：
-    *   生成描述性統計報告。
-    *   計算數值欄位的相關係數矩陣。
-    *   繪製直方圖以展示數據分佈。
-    *   繪製散佈圖以探索兩個數值變數之間的關係。
+## ✨ 功能總覽
 
-## 安裝與運行
+| 模組 | 核心功能 |
+|---|---|
+| 📄 文件處理 | PDF/DOCX 文字提取、表格提取、OCR 掃描版辨識、關鍵字搜尋、自動摘要 |
+| 🌐 智能翻譯 | 多語言翻譯、長文件自動分段翻譯、雙語對照顯示 |
+| 🧹 數據清洗 | 缺失值處理、去重、資料類型轉換、多欄異常值檢測（IQR / Z-score）、清洗前後對比報告 |
+| 📊 數據分析 | 描述性統計、相關係數熱力圖、直方圖、散佈圖、箱型圖、折線圖、圓餅圖、自動洞察摘要 |
 
-請按照以下步驟在您的本地環境中安裝並運行此應用程式：
+---
 
-1.  **克隆 Repository** (如果您是從 GitHub 克隆):
-    ```bash
-    git clone <您的 GitHub Repository 網址>
-    cd <您的專案資料夾名稱>
-    ```
-
-2.  **建立虛擬環境** (推薦):
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate  # macOS/Linux
-    # venv\Scripts\activate  # Windows
-    ```
-
-3.  **安裝依賴套件**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **運行應用程式**:
-    ```bash
-    streamlit run app.py
-    ```
-
-    應用程式將在本地啟動，並在終端機中顯示一個本地 URL (通常是 `http://localhost:8501`)。您可以在瀏覽器中打開此 URL 訪問應用程式。
-
-## 專案結構
+## 🗂️ 專案結構
 
 ```
-. 
-├── app.py                  # Streamlit 應用程式主文件
-├── requirements.txt        # 專案依賴套件列表
-├── README.md               # 專案說明文件
-└── modules/                # 核心功能模組資料夾
-    ├── __init__.py         # 標示為 Python 套件
-    ├── pdf.py              # PDF 處理模組
-    ├── word.py             # DOCX 處理模組
-    ├── translate.py        # 文本翻譯模組
-    ├── data_clean.py       # 數據清洗模組
-    └── analysis.py         # 數據分析與視覺化模組
+├── app.py                     # 主程式，負責 UI 與流程串接
+├── requirements.txt            # Python 套件依賴
+├── packages.txt                 # 系統層依賴（Streamlit Cloud 用，支援 OCR）
+├── runtime.txt                   # 指定 Python 版本
+└── modules/
+    ├── pdf.py                    # PDF 文字/表格提取、OCR
+    ├── word.py                   # DOCX 文字/表格提取
+    ├── text_utils.py              # 關鍵字搜尋、自動摘要
+    ├── translate.py                # 翻譯功能（單句 / 長文 / 雙語對照）
+    ├── data_clean.py                # 數據清洗與異常值檢測
+    └── analysis.py                    # 數據分析與 Plotly 視覺化
 ```
 
-## 使用說明
+---
 
-### 文件處理
+## 🚀 快速開始
 
-1.  在「文件處理 (PDF/DOCX)」區塊中，上傳您的 PDF 或 DOCX 文件。
-2.  選擇正確的「文件類型」。
-3.  提取的文字內容、文件元數據將自動顯示，並提供下載按鈕。
+### 本機執行
 
-### 文本翻譯
+```bash
+git clone <您的專案網址>
+cd <專案資料夾>
+pip install -r requirements.txt
+streamlit run app.py
+```
 
-1.  在「文本翻譯」區塊，輸入您想翻譯的文字。
-2.  選擇「來源語言」和「目標語言」。
-3.  翻譯結果將自動顯示。
+### OCR 功能額外需求
 
-### 數據清洗與分析
+若要使用「掃描版 PDF 辨識」功能，本機需額外安裝：
 
-1.  在「數據清洗與分析 (CSV/Excel)」區塊中，上傳您的 CSV 或 Excel 數據檔案。
-2.  數據預覽將自動顯示。
-3.  在「數據清洗」區塊，您可以選擇：
-    *   缺失值處理策略。
-    *   是否移除重複行。
-    *   指定欄位進行資料類型轉換。
-    *   指定欄位進行異常值檢測。
-4.  點擊「執行數據清洗」按鈕，查看清洗狀態和清洗後的數據預覽。
-5.  在「數據分析與視覺化」區塊，選擇「分析類型」並提供必要的欄位。
-6.  點擊「執行分析」按鈕，查看分析結果和生成的圖表。
+- **Tesseract OCR**（含繁體中文語言包 `chi_tra`）
+- **Poppler**（供 `pdf2image` 轉換頁面用）
 
-## 貢獻
+macOS 範例：
+```bash
+brew install tesseract tesseract-lang poppler
+```
 
-歡迎任何形式的貢獻！如果您有任何建議或發現 Bug，請隨時提出 Issue 或提交 Pull Request。
+Ubuntu / Debian 範例：
+```bash
+sudo apt-get install tesseract-ocr tesseract-ocr-chi-tra poppler-utils
+```
 
-## 許可證
+### 部署到 Streamlit Cloud
 
-此專案採用 MIT 許可證。詳情請參閱 `LICENSE` 文件 (如果存在)。
+1. 將專案推送到 GitHub。
+2. 在 [Streamlit Cloud](https://streamlit.io/cloud) 建立新 App，指向 `app.py`。
+3. 確認專案根目錄包含 `packages.txt`（Streamlit Cloud 會自動讀取並安裝系統層依賴，用於 OCR 功能）。
+
+---
+
+## 📖 使用說明
+
+### 📄 文件處理
+
+1. 上傳 PDF 或 DOCX 檔案。
+2. 若是掃描版 PDF（純文字提取結果空白），勾選「啟用 OCR」重新提取。
+3. 若文件內含表格，系統會自動偵測並以表格形式顯示。
+4. 可輸入關鍵字搜尋文中出現位置，或一鍵生成自動摘要。
+
+### 🌐 智能翻譯
+
+- 可手動輸入文字，或直接選擇「使用上方文件提取的內容」進行翻譯，省去複製貼上。
+- 長文件會自動依段落切塊翻譯後拼接，避免超出單次請求字數限制。
+- 勾選「雙語對照顯示」可逐段並排比對原文與譯文。
+
+> ⚠️ 繁體中文語言代碼請使用 `zh-TW`（大寫 TW）。
+
+### 🧹 數據清洗
+
+1. 上傳 CSV 或 Excel 檔案。
+2. 選擇缺失值處理策略（平均值 / 中位數 / 最常見值 / 直接刪除）。
+3. 可勾選移除重複行、指定欄位轉換資料類型。
+4. 多選欄位進行異常值檢測，可選擇 **IQR** 或 **Z-score** 方法。
+5. 清洗完成後會顯示「清洗前後對比報告」，並可下載 CSV 或 Excel 格式的清洗結果。
+
+### 📊 數據分析
+
+- 支援 8 種分析類型：描述性統計、相關係數熱力圖、直方圖、散佈圖、箱型圖、折線圖、圓餅圖、自動洞察摘要。
+- 所有圖表使用 **Plotly** 繪製，可互動縮放、hover 查看數值。
+- 「自動洞察摘要」會依據偏度、缺失值比例、強相關性等規則，自動生成文字分析結論。
+
+---
+
+## 🛠️ 技術棧
+
+- **前端框架**：Streamlit
+- **文件處理**：PyMuPDF、pdfplumber、python-docx、pytesseract、pdf2image
+- **翻譯引擎**：deep-translator（Google Translate）
+- **數據處理**：pandas、numpy
+- **視覺化**：Plotly
+
+---
+
+## ❓ 常見問題
+
+**Q: 翻譯功能報錯 `ModuleNotFoundError: No module named 'cgi'`？**
+A: 這是舊版 `googletrans` 依賴的 `httpx` 呼叫已被 Python 3.13+ 移除的 `cgi` 模組所致。本專案已改用 `deep-translator`，不再有此問題。
+
+**Q: OCR 功能沒反應或報錯？**
+A: 請確認 `packages.txt` 已包含 `tesseract-ocr`、`tesseract-ocr-chi-tra`、`poppler-utils`，並重新 Reboot App 讓系統依賴生效。
+
+**Q: 異常值檢測欄位選單是空的？**
+A: 異常值檢測僅支援數值型欄位，請確認上傳的資料中該欄位已正確轉換為數字類型。
+
+---
+
+## 📝 授權
+
+本專案僅供學習與內部使用，翻譯功能依賴第三方 Google Translate 服務，請留意其使用條款。
+```
+
+---
+
+## 📌 使用建議
+
+把這份內容存成專案根目錄下的 `README.md`，GitHub 和 Streamlit Cloud 都會自動在專案首頁顯示這份說明，未來如果又新增功能（比如串接真正的 LLM API 做摘要），直接更新「功能總覽」表格和「使用說明」段落就好，保持文件跟程式碼同步。
