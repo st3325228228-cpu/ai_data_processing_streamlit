@@ -1,11 +1,13 @@
 streamlit
-pypdf
-python-docx
 pandas
 numpy
-openpyxl
-tabulate
-matplotlib
-seaborn
+PyMuPDF
+pdfplumber
+python-docx
 deep-translator
+plotly
+openpyxl
+pytesseract
+pdf2image
+Pillow
 
