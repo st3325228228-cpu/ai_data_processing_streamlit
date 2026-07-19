@@ -1,99 +1,104 @@
 import pandas as pd
 import numpy as np
+from io import BytesIO
+
 
 def load_data(file_path):
-    """
-    根據檔案類型載入資料 (CSV 或 Excel)。
-    :return: (df, error_msg) tuple，成功時 error_msg 為 None。
-    """
+    """依副檔名載入 CSV 或 Excel，回傳 (DataFrame, 錯誤訊息)"""
     try:
-        if file_path.lower().endswith(".csv"):
-            return pd.read_csv(file_path), None
-        elif file_path.lower().endswith((".xls", ".xlsx")):
-            return pd.read_excel(file_path), None
+        if file_path.endswith('.csv'):
+            df = pd.read_csv(file_path)
         else:
-            return None, "不支援的檔案格式。請上傳 CSV 或 Excel 檔案。"
+            df = pd.read_excel(file_path)
+        return df, None
     except Exception as e:
-        return None, f"載入檔案時發生錯誤: {e}"
+        return None, str(e)
 
 
-def handle_missing_values(df, strategy="mean", columns=None):
-    """
-    處理缺失值。
-    :param df: DataFrame。
-    :param strategy: 填充策略 ("mean", "median", "most_frequent", "drop")。
-    :param columns: 要處理的欄位列表，None 表示處理所有適用欄位。
-    :return: 處理後的 DataFrame。
-    """
-    if df is None:
-        return None
+def handle_missing_values(df, strategy='mean'):
+    df = df.copy()
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
 
-    df_cleaned = df.copy()
-    if columns is None:
-        columns = df_cleaned.columns
+    if strategy == 'drop':
+        return df.dropna()
 
-    for col in columns:
-        if col not in df_cleaned.columns:
-            continue
-
-        if df_cleaned[col].isnull().any():
-            if strategy == "drop":
-                df_cleaned = df_cleaned.dropna(subset=[col])
-            elif strategy == "mean" and pd.api.types.is_numeric_dtype(df_cleaned[col]):
-                df_cleaned[col] = df_cleaned[col].fillna(df_cleaned[col].mean())
-            elif strategy == "median" and pd.api.types.is_numeric_dtype(df_cleaned[col]):
-                df_cleaned[col] = df_cleaned[col].fillna(df_cleaned[col].median())
-            elif strategy == "most_frequent":
-                mode_vals = df_cleaned[col].mode()
-                if not mode_vals.empty:
-                    df_cleaned[col] = df_cleaned[col].fillna(mode_vals[0])
-    return df_cleaned
+    for col in numeric_cols:
+        if strategy == 'mean':
+            df[col] = df[col].fillna(df[col].mean())
+        elif strategy == 'median':
+            df[col] = df[col].fillna(df[col].median())
+        elif strategy == 'most_frequent':
+            mode = df[col].mode()
+            if not mode.empty:
+                df[col] = df[col].fillna(mode[0])
+    return df
 
 
 def remove_duplicates(df):
-    """
-    移除重複行。
-    """
-    if df is None:
-        return None
     return df.drop_duplicates()
 
 
-def convert_data_types(df, conversions=None):
-    """
-    轉換資料類型。
-    :param df: DataFrame。
-    :param conversions: 字典，鍵為欄位名，值為目標類型 (例如: {"Age": int, "Date": "datetime64[ns]"})。
-    :return: 轉換後的 DataFrame。
-    """
-    if df is None:
-        return None
-
-    df_converted = df.copy()
-    if conversions:
-        for col, dtype in conversions.items():
-            if col in df_converted.columns:
-                try:
-                    df_converted[col] = df_converted[col].astype(dtype)
-                except Exception as e:
-                    print(f"Warning: Could not convert column {col} to {dtype}. Error: {e}")
-    return df_converted
+def convert_data_types(df, column_type_map):
+    df = df.copy()
+    for col, dtype in column_type_map.items():
+        df[col] = df[col].astype(dtype)
+    return df
 
 
 def detect_outliers_iqr(df, column):
-    """
-    使用 IQR 方法檢測單一數值欄位的異常值。
-    :param df: DataFrame。
-    :param column: 要檢測的數值欄位名。
-    :return: 包含異常值的 DataFrame，若欄位不存在或非數值型則回傳 None。
-    """
-    if df is None or column not in df.columns or not pd.api.types.is_numeric_dtype(df[column]):
-        return None
-
     Q1 = df[column].quantile(0.25)
     Q3 = df[column].quantile(0.75)
     IQR = Q3 - Q1
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    outliers = df[(df[column] < lower_bound) | (df[column] > upper_bound)]
-    return outliers
+    lower, upper = Q1 - 1.5 * IQR, Q3 + 1.5 * IQR
+    return df[(df[column] < lower) | (df[column] > upper)]
+
+
+def detect_outliers_multi(df, columns, method='iqr', z_thresh=3):
+    """
+    多欄批次異常值檢測
+    method: 'iqr' 或 'zscore'
+    回傳：(各欄異常值數量的 dict, 標記異常行的完整 DataFrame)
+    """
+    report = {}
+    outlier_mask = pd.Series(False, index=df.index)
+
+    for col in columns:
+        if not pd.api.types.is_numeric_dtype(df[col]):
+            continue
+
+        if method == 'iqr':
+            Q1, Q3 = df[col].quantile(0.25), df[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower, upper = Q1 - 1.5 * IQR, Q3 + 1.5 * IQR
+            col_mask = (df[col] < lower) | (df[col] > upper)
+        else:  # zscore
+            mean, std = df[col].mean(), df[col].std()
+            z_scores = (df[col] - mean) / std
+            col_mask = z_scores.abs() > z_thresh
+
+        report[col] = int(col_mask.sum())
+        outlier_mask = outlier_mask | col_mask
+
+    return report, df[outlier_mask]
+
+
+def clean_comparison_report(df_before, df_after):
+    """清洗前後對比報告"""
+    return {
+        "清洗前列數": len(df_before),
+        "清洗後列數": len(df_after),
+        "刪除列數": len(df_before) - len(df_after),
+        "清洗前缺失值總數": int(df_before.isnull().sum().sum()),
+        "清洗後缺失值總數": int(df_after.isnull().sum().sum()),
+        "清洗前重複列數": int(df_before.duplicated().sum()),
+        "清洗後重複列數": int(df_after.duplicated().sum()),
+    }
+
+
+def export_dataframe(df, file_format='csv'):
+    """匯出成 bytes，供 st.download_button 使用"""
+    if file_format == 'csv':
+        return df.to_csv(index=False).encode('utf-8-sig')
+    buffer = BytesIO()
+    df.to_excel(buffer, index=False, engine='openpyxl')
+    return buffer.getvalue()
