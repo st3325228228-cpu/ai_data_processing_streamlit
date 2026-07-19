@@ -24,15 +24,40 @@ def get_pdf_metadata(file_path):
 
 
 def extract_tables_from_pdf(file_path):
-    """從 PDF 提取表格，回傳 DataFrame 清單"""
+    import pdfplumber
+    import pandas as pd
+
     tables = []
     with pdfplumber.open(file_path) as pdf:
         for page in pdf.pages:
-            for t in page.extract_tables():
-                if len(t) > 1:
-                    df = pd.DataFrame(t[1:], columns=t[0])
+            for table in page.extract_tables():
+                if not table or len(table) < 2:
+                    continue
+                header, rows = table[0], table[1:]
+                header = _make_columns_unique(header)
+                try:
+                    df = pd.DataFrame(rows, columns=header)
                     tables.append(df)
+                except Exception:
+                    # 該表格結構異常，跳過但不中斷整個文件處理
+                    continue
     return tables
+
+
+def _make_columns_unique(columns):
+    """將 None / 空字串 / 重複欄名，轉為唯一且可讀的欄位名稱"""
+    seen = {}
+    result = []
+    for i, col in enumerate(columns):
+        name = str(col).strip() if col not in (None, "") else f"欄位_{i+1}"
+        if name in seen:
+            seen[name] += 1
+            name = f"{name}_{seen[name]}"
+        else:
+            seen[name] = 0
+        result.append(name)
+    return result
+
 
 
 def extract_text_ocr(file_path):
