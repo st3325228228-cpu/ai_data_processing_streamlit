@@ -7,4 +7,5 @@ openpyxl
 tabulate
 matplotlib
 seaborn
-googletrans==4.0.0-rc1
+deep-translator
+
