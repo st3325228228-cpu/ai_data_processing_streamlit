@@ -1,22 +1,43 @@
 from deep_translator import GoogleTranslator
 
+
 def translate_text(text, dest_lang='en', src_lang='auto'):
-    """
-    使用 Google Translate 翻譯文字（透過 deep-translator）。
-    :param text: 要翻譯的文字。
-    :param dest_lang: 目標語言代碼 (例如: 'en', 'zh-TW')。
-    :param src_lang: 來源語言代碼 (例如: 'auto', 'zh-TW')。
-    :return: 翻譯後的文字。
-    """
+    """單段文字翻譯"""
     try:
-        translated = GoogleTranslator(source=src_lang, target=dest_lang).translate(text)
-        return translated
+        return GoogleTranslator(source=src_lang, target=dest_lang).translate(text)
     except Exception as e:
         return f"翻譯錯誤: {e}"
 
 
-if __name__ == '__main__':
-    chinese_text = '你好，世界！這是一個測試翻譯的句子。'
-    english_translation = translate_text(chinese_text, dest_lang='en')
-    print(f"原始中文: {chinese_text}")
-    print(f"翻譯成英文: {english_translation}")
+def translate_long_text(text, dest_lang='en', src_lang='auto', chunk_size=4500):
+    """
+    長文件翻譯：deep-translator 單次請求有字數限制，
+    這裡自動依段落切塊後逐段翻譯再拼接
+    """
+    paragraphs = text.split('\n')
+    translated_paragraphs = []
+    buffer = ""
+
+    for p in paragraphs:
+        if len(buffer) + len(p) < chunk_size:
+            buffer += p + "\n"
+        else:
+            translated_paragraphs.append(translate_text(buffer, dest_lang, src_lang))
+            buffer = p + "\n"
+    if buffer:
+        translated_paragraphs.append(translate_text(buffer, dest_lang, src_lang))
+
+    return "\n".join(translated_paragraphs)
+
+
+def translate_bilingual(text, dest_lang='en', src_lang='auto'):
+    """
+    雙語對照：回傳 [(原文段落, 譯文段落), ...] 的清單，
+    方便前端逐段並排顯示
+    """
+    paragraphs = [p for p in text.split('\n') if p.strip()]
+    result = []
+    for p in paragraphs:
+        translated = translate_text(p, dest_lang, src_lang)
+        result.append((p, translated))
+    return result
