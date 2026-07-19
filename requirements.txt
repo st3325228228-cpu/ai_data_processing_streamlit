@@ -1,0 +1,10 @@
+streamlit
+pypdf
+python-docx
+pandas
+numpy
+openpyxl
+tabulate
+matplotlib
+seaborn
+googletrans==4.0.0-rc1
